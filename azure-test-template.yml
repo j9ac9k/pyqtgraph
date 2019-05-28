@@ -62,7 +62,7 @@ jobs:
 # xvfb - Linux
   - bash: |
       sudo apt-get install -y xvfb libxkbcommon-x11-0  # herbstluftwm
-      pip3 install pytest-xvfb
+      pip install pytest-xvfb
     displayName: "Linux Virtual Display Setup - pip"
     condition: and(eq(variables['install.method'], 'pip'), eq(variables['agent.os'], 'Linux' ))
   
@@ -80,7 +80,8 @@ jobs:
     condition: eq(variables['install.method'], 'pip' )
 
 # pip
-  - bash: python -m pytest pyqtgraph -sv --test-run-title="Tests for $(Agent.OS) - Python $(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" --napoleon-docstrings
+  - bash: | 
+      python -m pytest -sv --junitxml=junit/test-results.xml --cov --cov-report=xml --cov-report=html:cov_html --test-run-title="$(Agent.OS) - Python $(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" --napoleon-docstrings
     displayName: 'Unittests - pip' 
     continueOnError: false
     env:
@@ -90,7 +91,7 @@ jobs:
 # conda - windows
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: 'Windows - Add conda to $PATH'
-    condition: eq(variables['agent.os'], 'Windows_NT' )
+    condition: and(eq(variables['install.method'], 'conda' ), eq(variables['agent.os'], 'Windows_NT' ))
 
 # conda - macOS
   - bash: |
@@ -144,9 +145,24 @@ jobs:
 # conda - all
   - bash: |
       source activate test-environment-$(python.version)
-      python -m pytest pyqtgraph -sv --test-run-title="Tests for $(Agent.OS) - Python $(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" --napoleon-docstrings
+      python -m pytest -sv --junitxml=junit/test-results.xml --cov --cov-report=xml --cov-report=html:cov_html --test-run-title="$(Agent.OS) - Python $(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" --napoleon-docstrings
     displayName: 'Unittests - conda'
     continueOnError: false
     env:
       DISPLAY: :99.0
     condition: eq(variables['install.method'], 'conda' )
+
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: 'JUnit' # Options: JUnit, NUnit, VSTest, xUnit
+      testResultsFiles: 'junit/test-results.xml'
+      mergeTestResults: true # Optional
+      publishRunAttachments: true # Optional
+      testRunTitle: "$(Agent.OS) - Python $(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)"
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/test-cov.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/cov_html'

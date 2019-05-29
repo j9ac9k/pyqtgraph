@@ -74,7 +74,7 @@ jobs:
       echo installed packages
       pip list
       echo pyqtgraph system info
-      python -c "import pyqtgraph as pg; pg.systemInfo()"
+      python -m pytest test.py -s
     displayName: 'Debug - pip'
     continueOnError: false
     condition: eq(variables['install.method'], 'pip' )
@@ -137,7 +137,7 @@ jobs:
       echo installed packages
       conda list
       echo pyqtgraph system info
-      python -c "import pyqtgraph as pg; pg.systemInfo()"
+      python -m pytest test.py -s
     displayName: 'Debug - conda'
     continueOnError: false
     condition: eq(variables['install.method'], 'conda' )
@@ -145,7 +145,7 @@ jobs:
 # conda - all
   - bash: |
       source activate test-environment-$(python.version)
-      python -m pytest -sv --junitxml=junit/test-results.xml --cov --cov-report=xml --cov-report=html:cov_html --test-run-title="$(Agent.OS) - Python $(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" --napoleon-docstrings
+      python -m pytest -sv --junitxml=junit/test-results.xml --cov --cov-report=xml --cov-report=html:cov_html --test-run-title="$(Agent.OS) - Python$(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" --napoleon-docstrings
     displayName: 'Unittests - conda'
     continueOnError: false
     env:

@@ -75,21 +75,22 @@ jobs:
       pip list
       echo pyqtgraph system info
       python -c "import pyqtgraph as pg; pg.systemInfo()"
+      python -c "from pyqtgraph.util.get_resolution import getResolution; print(getResolution())"
     displayName: 'Debug - pip'
     continueOnError: false
     condition: eq(variables['install.method'], 'pip' )
 
 # pip
   - bash: | 
-      python test.py -svv \
+      python -m pytest -svv \
         --test-run-title="$(Agent.OS) - Python$(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" \
         --junitxml=junit/test-results.xml \
-        --cov --cov-report=xml --cov-report=html:cov_html \
+        --cov --cov-report=xml --cov-report=html:htmlcov \
         --napoleon-docstrings
     displayName: 'Unittests - pip' 
     continueOnError: false
     env:
-      DISPLAY: :99.0
+      AZURE: 1
     condition: eq(variables['install.method'], 'pip' )
 
 # conda - windows
@@ -142,6 +143,7 @@ jobs:
       conda list
       echo pyqtgraph system info
       python -c "import pyqtgraph as pg; pg.systemInfo()"
+      python -c "from pyqtgraph.util.get_resolution import getResolution; print(getResolution())"
     displayName: 'Debug - conda'
     continueOnError: false
     condition: eq(variables['install.method'], 'conda' )
@@ -152,12 +154,12 @@ jobs:
       python test.py -svv \
         --test-run-title="$(Agent.OS) - Python$(python.version) - Install Method $(install.method)- Bindings $(qt.bindings)" \
         --junitxml=junit/test-results.xml \
-        --cov --cov-report=xml --cov-report=html:cov_html \
+        --cov --cov-report=xml --cov-report=html:htmlcov \
         --napoleon-docstrings
     displayName: 'Unittests - conda'
     continueOnError: false
     env:
-      DISPLAY: :99.0
+      AZURE: 1
     condition: eq(variables['install.method'], 'conda' )
 
   - task: PublishTestResults@2
@@ -173,4 +175,4 @@ jobs:
     inputs:
       codeCoverageTool: Cobertura
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/test-cov.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/cov_html'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/htmlcov'

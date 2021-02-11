@@ -54,6 +54,7 @@ Symbols['x'] = tr.map(Symbols['+'])
 
 
 def drawSymbol(painter, symbol, size, pen, brush):
+    profiler = debug.Profiler(disabled=False)
     if symbol is None:
         return
     painter.scale(size, size)
@@ -67,6 +68,7 @@ def drawSymbol(painter, symbol, size, pen, brush):
 
 
 def renderSymbol(symbol, size, pen, brush, device=None):
+    profiler = debug.Profiler(disabled=False)
     """
     Render a symbol specification to QImage.
     Symbol may be either a QPainterPath or one of the keys in the Symbols dict.
@@ -123,6 +125,7 @@ class SymbolAtlas(object):
         """
         Given a list of spot records, return an object representing the coordinates of that symbol within the atlas
         """
+        profiler = debug.Profiler(disabled=False)
 
         sourceRect = []
         keyi = None
@@ -321,6 +324,7 @@ class ScatterPlotItem(GraphicsObject):
                                generating LegendItem entries and by some exporters.
         ====================== ===============================================================================================
         """
+        profiler = debug.Profiler(disabled=False)
         oldData = self.data  ## this causes cached pixmaps to be preserved while new data is registered.
         self.clear()  ## clear out all old data
         self.addPoints(*args, **kargs)
@@ -330,7 +334,7 @@ class ScatterPlotItem(GraphicsObject):
         Add new points to the scatter plot.
         Arguments are the same as setData()
         """
-
+        profiler = debug.Profiler(disabled=False)
         ## deal with non-keyword arguments
         if len(args) == 1:
             kargs['spots'] = args[0]
@@ -744,6 +748,7 @@ class ScatterPlotItem(GraphicsObject):
 
     @debug.warnOnException  ## raising an exception here causes crash
     def paint(self, p, *args):
+        profiler = debug.Profiler(disabled=False)
         cmode = self.opts.get('compositionMode', None)
         if cmode is not None:
             p.setCompositionMode(cmode)

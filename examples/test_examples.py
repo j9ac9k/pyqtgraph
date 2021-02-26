@@ -168,7 +168,6 @@ try:
     sys.stdout.flush()
     pg.Qt.QtCore.QTimer.singleShot(1000, pg.Qt.QtWidgets.QApplication.quit)
     pg.Qt.QtWidgets.QApplication.instance().exec_()
-    # pg.exit()
 except:
     print("test failed")
     raise

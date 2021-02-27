@@ -175,7 +175,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 dt = xp.uint16
                 loc = 4096
                 scale = 1024
-                mx = 2**16
+                mx = 2**16 - 1
             elif cacheKey[0] == 'float':
                 dt = xp.float32
                 loc = 1.0
@@ -185,14 +185,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 raise ValueError(f"unable to handle dtype: {cacheKey[0]}")
             
             if self.ui.rgbCheck.isChecked():
-                data = xp.random.normal(size=(frames,height,width,3), loc=loc, scale=scale)
-                data = pg.gaussianFilter(data, (0, 6, 6, 0))
+                shape = (height,width,3)
             else:
-                data = xp.random.normal(size=(frames,height,width), loc=loc, scale=scale)
-                data = pg.gaussianFilter(data, (0, 6, 6))
-            if cacheKey[0] != 'float':
-                data = xp.clip(data, 0, mx)
-            data = data.astype(dt)
+                shape = (height,width)
+            data = xp.empty((frames,) + shape, dtype=dt)
+            for idx in range(frames):
+                frame = xp.random.normal(loc=loc, scale=scale, size=shape)
+                if cacheKey[0] != 'float':
+                    xp.clip(frame, 0, mx, out=frame)
+                data[idx] = frame
             data[:, 10:50, 10] = mx
             data[:, 48, 9:12] = mx
             data[:, 47, 8:13] = mx

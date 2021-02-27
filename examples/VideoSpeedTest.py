@@ -18,6 +18,8 @@ import pyqtgraph as pg
 import pyqtgraph.ptime as ptime
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets, QT_LIB
 
+pg.setConfigOption('imageAxisOrder', 'row-major')
+
 import importlib
 ui_template = importlib.import_module(f'VideoTemplate_{QT_LIB.lower()}')
 
@@ -183,17 +185,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 raise ValueError(f"unable to handle dtype: {cacheKey[0]}")
             
             if self.ui.rgbCheck.isChecked():
-                data = xp.random.normal(size=(frames,width,height,3), loc=loc, scale=scale)
+                data = xp.random.normal(size=(frames,height,width,3), loc=loc, scale=scale)
                 data = pg.gaussianFilter(data, (0, 6, 6, 0))
             else:
-                data = xp.random.normal(size=(frames,width,height), loc=loc, scale=scale)
+                data = xp.random.normal(size=(frames,height,width), loc=loc, scale=scale)
                 data = pg.gaussianFilter(data, (0, 6, 6))
             if cacheKey[0] != 'float':
                 data = xp.clip(data, 0, mx)
             data = data.astype(dt)
-            data[:, 10, 10:50] = mx
-            data[:, 9:12, 48] = mx
-            data[:, 8:13, 47] = mx
+            data[:, 10:50, 10] = mx
+            data[:, 48, 9:12] = mx
+            data[:, 47, 8:13] = mx
             self.cache = {cacheKey: data} # clear to save memory (but keep one to prevent unnecessary regeneration)
 
         self.data = self.cache[cacheKey]

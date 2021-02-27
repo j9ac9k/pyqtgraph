@@ -16,7 +16,7 @@ import numpy as np
 
 import pyqtgraph as pg
 import pyqtgraph.ptime as ptime
-from pyqtgraph.Qt import QtGui, QtCore, QT_LIB
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets, QT_LIB
 
 import importlib
 ui_template = importlib.import_module(f'VideoTemplate_{QT_LIB.lower()}')
@@ -45,109 +45,125 @@ parser.add_argument('--lut-alpha', default=False, action='store_true', help="Use
 parser.add_argument('--size', default='512x512', type=lambda s: tuple([int(x) for x in s.split('x')]), help="WxH image dimensions default='512x512'")
 args = parser.parse_args(sys.argv[1:])
 
+if args.cuda and _has_cupy:
+    xp = cp
+else:
+    xp = np
+
 if RawImageGLWidget is not None:
     # don't limit frame rate to vsync
     sfmt = QtGui.QSurfaceFormat()
     sfmt.setSwapInterval(0)
     QtGui.QSurfaceFormat.setDefaultFormat(sfmt)
 
-app = pg.mkQApp("Video Speed Test Example")
+pg.mkQApp("Video Speed Test Example")
 
-win = QtGui.QMainWindow()
-win.setWindowTitle('pyqtgraph example: VideoSpeedTest')
-ui = ui_template.Ui_MainWindow()
-ui.setupUi(win)
-win.show()
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-if RawImageGLWidget is None:
-    ui.rawGLRadio.setEnabled(False)
-    ui.rawGLRadio.setText(ui.rawGLRadio.text() + " (OpenGL not available)")
-else:
-    ui.rawGLImg = RawImageGLWidget()
-    ui.stack.addWidget(ui.rawGLImg)
+        ui = ui_template.Ui_MainWindow()
+        ui.setupUi(self)
+        self.show()
 
-# read in CLI args
-ui.cudaCheck.setChecked(args.cuda and _has_cupy)
-ui.cudaCheck.setEnabled(_has_cupy)
-ui.framesSpin.setValue(args.frames)
-ui.widthSpin.setValue(args.size[0])
-ui.heightSpin.setValue(args.size[1])
-ui.dtypeCombo.setCurrentText(args.dtype)
-ui.rgbCheck.setChecked(args.image_mode=='rgb')
-ui.maxSpin1.setOpts(value=255, step=1)
-ui.minSpin1.setOpts(value=0, step=1)
-levelSpins = [ui.minSpin1, ui.maxSpin1, ui.minSpin2, ui.maxSpin2, ui.minSpin3, ui.maxSpin3]
-if args.cuda and _has_cupy:
-    xp = cp
-else:
-    xp = np
-if args.levels is None:
-    ui.scaleCheck.setChecked(False)
-    ui.rgbLevelsCheck.setChecked(False)
-else:
-    ui.scaleCheck.setChecked(True)
-    if len(args.levels) == 2:
-        ui.rgbLevelsCheck.setChecked(False)
-        ui.minSpin1.setValue(args.levels[0])
-        ui.maxSpin1.setValue(args.levels[1])
-    elif len(args.levels) == 6:
-        ui.rgbLevelsCheck.setChecked(True)
-        for spin,val in zip(levelSpins, args.levels):
-            spin.setValue(val)
-    else:
-        raise ValueError("levels argument must be 2 or 6 comma-separated values (got %r)" % (args.levels,))
-ui.lutCheck.setChecked(args.lut)
-ui.alphaCheck.setChecked(args.lut_alpha)
+        if RawImageGLWidget is None:
+            ui.rawGLRadio.setEnabled(False)
+            ui.rawGLRadio.setText(ui.rawGLRadio.text() + " (OpenGL not available)")
+        else:
+            ui.rawGLImg = RawImageGLWidget()
+            ui.stack.addWidget(ui.rawGLImg)
 
+        # read in CLI args
+        ui.cudaCheck.setChecked(args.cuda and _has_cupy)
+        ui.cudaCheck.setEnabled(_has_cupy)
+        ui.framesSpin.setValue(args.frames)
+        ui.widthSpin.setValue(args.size[0])
+        ui.heightSpin.setValue(args.size[1])
+        ui.dtypeCombo.setCurrentText(args.dtype)
+        ui.rgbCheck.setChecked(args.image_mode=='rgb')
+        ui.maxSpin1.setOpts(value=255, step=1)
+        ui.minSpin1.setOpts(value=0, step=1)
+        self.levelSpins = [ui.minSpin1, ui.maxSpin1, ui.minSpin2, ui.maxSpin2, ui.minSpin3, ui.maxSpin3]
+        if args.levels is None:
+            ui.scaleCheck.setChecked(False)
+            ui.rgbLevelsCheck.setChecked(False)
+        else:
+            ui.scaleCheck.setChecked(True)
+            if len(args.levels) == 2:
+                ui.rgbLevelsCheck.setChecked(False)
+                ui.minSpin1.setValue(args.levels[0])
+                ui.maxSpin1.setValue(args.levels[1])
+            elif len(args.levels) == 6:
+                ui.rgbLevelsCheck.setChecked(True)
+                for spin,val in zip(self.levelSpins, args.levels):
+                    spin.setValue(val)
+            else:
+                raise ValueError("levels argument must be 2 or 6 comma-separated values (got %r)" % (args.levels,))
+        ui.lutCheck.setChecked(args.lut)
+        ui.alphaCheck.setChecked(args.lut_alpha)
 
-#ui.graphicsView.useOpenGL()  ## buggy, but you can try it if you need extra speed.
+        #ui.graphicsView.useOpenGL()  ## buggy, but you can try it if you need extra speed.
 
-vb = pg.ViewBox()
-ui.graphicsView.setCentralItem(vb)
-vb.setAspectLocked()
-img = pg.ImageItem()
-vb.addItem(img)
+        self.ui = ui
+        self.vb = pg.ViewBox()
+        ui.graphicsView.setCentralItem(self.vb)
+        self.vb.setAspectLocked()
+        self.img = pg.ImageItem()
+        self.vb.addItem(self.img)
 
+        self.LUT = None
+        self.cache = {}
+        self.ptr = 0
+        self.lastTime = ptime.time()
+        self.fps = None
+        self.data = None
 
+        self.connect_signals()
+        self.updateScale()
+        self.mkData()
 
-LUT = None
-def updateLUT():
-    global LUT, ui
-    dtype = ui.dtypeCombo.currentText()
-    if dtype == 'uint8':
-        n = 256
-    else:
-        n = 4096
-    LUT = ui.gradient.getLookupTable(n, alpha=ui.alphaCheck.isChecked())
-    if _has_cupy and xp == cp:
-        LUT = cp.asarray(LUT)
-ui.gradient.sigGradientChanged.connect(updateLUT)
-updateLUT()
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start()
 
-ui.alphaCheck.toggled.connect(updateLUT)
+    def connect_signals(self):
+        ui = self.ui
+        ui.gradient.sigGradientChanged.connect(self.updateLUT)
+        ui.alphaCheck.toggled.connect(self.updateLUT)
 
-def updateScale():
-    global ui, levelSpins
-    if ui.rgbLevelsCheck.isChecked():
-        for s in levelSpins[2:]:
-            s.setEnabled(True)
-    else:
-        for s in levelSpins[2:]:
-            s.setEnabled(False)
+        ui.rgbLevelsCheck.toggled.connect(self.updateScale)
+        ui.dtypeCombo.currentIndexChanged.connect(self.mkData)
+        ui.rgbCheck.toggled.connect(self.mkData)
+        ui.widthSpin.editingFinished.connect(self.mkData)
+        ui.heightSpin.editingFinished.connect(self.mkData)
+        ui.framesSpin.editingFinished.connect(self.mkData)
 
-updateScale()
+        ui.widthSpin.valueChanged.connect(self.updateSize)
+        ui.heightSpin.valueChanged.connect(self.updateSize)
+        ui.framesSpin.valueChanged.connect(self.updateSize)
+        ui.cudaCheck.toggled.connect(self.noticeCudaCheck)
 
-ui.rgbLevelsCheck.toggled.connect(updateScale)
+    def updateLUT(self):
+        dtype = self.ui.dtypeCombo.currentText()
+        if dtype == 'uint8':
+            n = 256
+        else:
+            n = 4096
+        self.LUT = self.ui.gradient.getLookupTable(n, alpha=self.ui.alphaCheck.isChecked())
+        if _has_cupy and xp == cp:
+            self.LUT = cp.asarray(self.LUT)
 
-cache = {}
-def mkData():
-    with pg.BusyCursor():
-        global data, cache, ui, xp
-        frames = ui.framesSpin.value()
-        width = ui.widthSpin.value()
-        height = ui.heightSpin.value()
-        cacheKey = (ui.dtypeCombo.currentText(), ui.rgbCheck.isChecked(), frames, width, height)
-        if cacheKey not in cache:
+    def updateScale(self):
+        checked = self.ui.rgbLevelsCheck.isChecked()
+        for s in self.levelSpins[2:]:
+            s.setEnabled(checked)
+
+    def mkData(self):
+        frames = self.ui.framesSpin.value()
+        width = self.ui.widthSpin.value()
+        height = self.ui.heightSpin.value()
+        cacheKey = (self.ui.dtypeCombo.currentText(), self.ui.rgbCheck.isChecked(), frames, width, height)
+        if cacheKey not in self.cache:
             if cacheKey[0] == 'uint8':
                 dt = xp.uint8
                 loc = 128
@@ -166,7 +182,7 @@ def mkData():
             else:
                 raise ValueError(f"unable to handle dtype: {cacheKey[0]}")
             
-            if ui.rgbCheck.isChecked():
+            if self.ui.rgbCheck.isChecked():
                 data = xp.random.normal(size=(frames,width,height,3), loc=loc, scale=scale)
                 data = pg.gaussianFilter(data, (0, 6, 6, 0))
             else:
@@ -178,104 +194,81 @@ def mkData():
             data[:, 10, 10:50] = mx
             data[:, 9:12, 48] = mx
             data[:, 8:13, 47] = mx
-            cache = {cacheKey: data} # clear to save memory (but keep one to prevent unnecessary regeneration)
+            self.cache = {cacheKey: data} # clear to save memory (but keep one to prevent unnecessary regeneration)
 
-        data = cache[cacheKey]
-        updateLUT()
-        updateSize()
+        self.data = self.cache[cacheKey]
+        self.updateLUT()
+        self.updateSize()
 
-def updateSize():
-    global ui, vb
-    frames = ui.framesSpin.value()
-    width = ui.widthSpin.value()
-    height = ui.heightSpin.value()
-    dtype = xp.dtype(str(ui.dtypeCombo.currentText()))
-    rgb = 3 if ui.rgbCheck.isChecked() else 1
-    ui.sizeLabel.setText('%d MB' % (frames * width * height * rgb * dtype.itemsize / 1e6))
-    vb.setRange(QtCore.QRectF(0, 0, width, height))
+    def updateSize(self):
+        frames = self.ui.framesSpin.value()
+        width = self.ui.widthSpin.value()
+        height = self.ui.heightSpin.value()
+        dtype = xp.dtype(str(self.ui.dtypeCombo.currentText()))
+        rgb = 3 if self.ui.rgbCheck.isChecked() else 1
+        self.ui.sizeLabel.setText('%d MB' % (frames * width * height * rgb * dtype.itemsize / 1e6))
+        self.vb.setRange(QtCore.QRectF(0, 0, width, height))
 
-
-def noticeCudaCheck():
-    global xp, cache
-    cache = {}
-    if ui.cudaCheck.isChecked():
-        if _has_cupy:
-            xp = cp
+    def noticeCudaCheck(self):
+        global xp
+        self.cache = {}
+        if self.ui.cudaCheck.isChecked():
+            if _has_cupy:
+                xp = cp
+            else:
+                xp = np
+                self.ui.cudaCheck.setChecked(False)
         else:
             xp = np
-            ui.cudaCheck.setChecked(False)
-    else:
-        xp = np
-    mkData()
+        self.mkData()
 
-mkData()
+    def update(self):
+        ui = self.ui
+        ptr = self.ptr
+        data = self.data
 
-
-ui.dtypeCombo.currentIndexChanged.connect(mkData)
-ui.rgbCheck.toggled.connect(mkData)
-ui.widthSpin.editingFinished.connect(mkData)
-ui.heightSpin.editingFinished.connect(mkData)
-ui.framesSpin.editingFinished.connect(mkData)
-
-ui.widthSpin.valueChanged.connect(updateSize)
-ui.heightSpin.valueChanged.connect(updateSize)
-ui.framesSpin.valueChanged.connect(updateSize)
-ui.cudaCheck.toggled.connect(noticeCudaCheck)
-
-
-ptr = 0
-lastTime = ptime.time()
-fps = None
-def update():
-    global ui, ptr, lastTime, fps, LUT, img
-    if ui.lutCheck.isChecked():
-        useLut = LUT
-    else:
-        useLut = None
-
-    downsample = ui.downsampleCheck.isChecked()
-
-    if ui.scaleCheck.isChecked():
-        if ui.rgbLevelsCheck.isChecked():
-            useScale = [
-                [ui.minSpin1.value(), ui.maxSpin1.value()],
-                [ui.minSpin2.value(), ui.maxSpin2.value()],
-                [ui.minSpin3.value(), ui.maxSpin3.value()]]
+        if ui.lutCheck.isChecked():
+            useLut = self.LUT
         else:
-            useScale = [ui.minSpin1.value(), ui.maxSpin1.value()]
-    else:
-        useScale = None
+            useLut = None
 
-    if ui.rawRadio.isChecked():
-        ui.rawImg.setImage(data[ptr%data.shape[0]], lut=useLut, levels=useScale)
-        ui.stack.setCurrentIndex(1)
-    elif ui.rawGLRadio.isChecked():
-        ui.rawGLImg.setImage(data[ptr%data.shape[0]], lut=useLut, levels=useScale)
-        ui.stack.setCurrentIndex(2)
-    else:
-        img.setImage(data[ptr%data.shape[0]], autoLevels=False, levels=useScale, lut=useLut, autoDownsample=downsample)
-        ui.stack.setCurrentIndex(0)
-        #img.setImage(data[ptr%data.shape[0]], autoRange=False)
+        downsample = ui.downsampleCheck.isChecked()
 
-    ptr += 1
-    now = ptime.time()
-    dt = now - lastTime
-    lastTime = now
-    if fps is None:
-        fps = 1.0/dt
-    else:
-        s = np.clip(dt*3., 0, 1)
-        fps = fps * (1-s) + (1.0/dt) * s
-    ui.fpsLabel.setText('%0.2f fps' % fps)
-    app.processEvents()  ## force complete redraw for every plot
-timer = QtCore.QTimer()
-timer.timeout.connect(update)
-timer.start(0)
+        if ui.scaleCheck.isChecked():
+            if ui.rgbLevelsCheck.isChecked():
+                useScale = [
+                    [ui.minSpin1.value(), ui.maxSpin1.value()],
+                    [ui.minSpin2.value(), ui.maxSpin2.value()],
+                    [ui.minSpin3.value(), ui.maxSpin3.value()]]
+            else:
+                useScale = [ui.minSpin1.value(), ui.maxSpin1.value()]
+        else:
+            useScale = None
 
+        if ui.rawRadio.isChecked():
+            ui.rawImg.setImage(data[ptr%data.shape[0]], lut=useLut, levels=useScale)
+            ui.stack.setCurrentIndex(1)
+        elif ui.rawGLRadio.isChecked():
+            ui.rawGLImg.setImage(data[ptr%data.shape[0]], lut=useLut, levels=useScale)
+            ui.stack.setCurrentIndex(2)
+        else:
+            self.img.setImage(data[ptr%data.shape[0]], autoLevels=False, levels=useScale, lut=useLut, autoDownsample=downsample)
+            ui.stack.setCurrentIndex(0)
+            #img.setImage(data[ptr%data.shape[0]], autoRange=False)
 
+        self.ptr += 1
+        now = ptime.time()
+        dt = now - self.lastTime
+        self.lastTime = now
+        if self.fps is None:
+            self.fps = 1.0/dt
+        else:
+            s = np.clip(dt*3., 0, 1)
+            self.fps = self.fps * (1-s) + (1.0/dt) * s
+        ui.fpsLabel.setText('%0.2f fps' % self.fps)
+        QtCore.QCoreApplication.processEvents()  ## force complete redraw for every plot
 
-## Start Qt event loop unless running in interactive mode or using pyside.
+mainwin = MainWindow()
+
 if __name__ == '__main__':
-    import sys
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+    QtWidgets.QApplication.instance().exec_()

@@ -124,7 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateScale()
         self.mkData()
 
-        self.timer = QtCore.QTimer(parent=self)
+        self.timer = QtCore.QTimer(parent=self.vb)
         self.timer.timeout.connect(self.update)
         self.timer.start()
 

@@ -58,8 +58,6 @@ if RawImageGLWidget is not None:
     sfmt.setSwapInterval(0)
     QtGui.QSurfaceFormat.setDefaultFormat(sfmt)
 
-pg.mkQApp("Video Speed Test Example")
-
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -271,7 +269,13 @@ class MainWindow(QtWidgets.QMainWindow):
         ui.fpsLabel.setText('%0.2f fps' % self.fps)
         QtCore.QCoreApplication.processEvents()  ## force complete redraw for every plot
 
-mainwin = MainWindow()
+
+def main(duration_ms=None):
+    pg.mkQApp("Video Speed Test Example")
+    win = MainWindow()
+    if duration_ms is not None:
+        pg.Qt.QtCore.QTimer.singleShot(duration_ms, pg.Qt.QtWidgets.QApplication.quit)
+    pg.Qt.QtWidgets.QApplication.instance().exec_()
 
 if __name__ == '__main__':
-    QtWidgets.QApplication.instance().exec_()
+    main()

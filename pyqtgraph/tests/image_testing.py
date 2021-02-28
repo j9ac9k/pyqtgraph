@@ -483,11 +483,9 @@ def getTestDataRepo():
 
         # Get the commit ID of testDataTag. Do a fetch if necessary.
         try:
-            print("trying to get git commit tag")
             tagCommit = gitCommitId(dataPath, testDataTag)
         except NameError:
             cmd = gitbase + ['fetch', '--tags', 'origin']
-            print("Got NameError, trying:")
             print(' '.join(cmd))
             sp.check_call(cmd)
             try:
@@ -523,10 +521,9 @@ def getTestDataRepo():
             cmds = [
                 gitbase + ['init'],
                 gitbase + ['remote', 'add', 'origin', gitPath],
-                gitbase + ['fetch', '--tags', 'origin', testDataTag,
-                           '--depth=1'],
+                gitbase + ['fetch', '--depth', "1" 'origin', "tag", testDataTag],
                 gitbase + ['checkout', '-b', 'master', 'FETCH_HEAD'],
-            ]
+            ] 
         else:
             # Create a full clone
             cmds = [['git', 'clone', gitPath, "--", dataPath]]
@@ -559,15 +556,14 @@ def gitStatus(path):
 def gitCommitId(path, ref):
     """Return the commit id of *ref* in the git repository at *path*.
     """
-    cmd = gitCmdBase(path) + ['show', ref]
+    cmd = gitCmdBase(path) + ['rev-parse', ref]
     try:
         output = runSubprocess(cmd, stderr=None, universal_newlines=True)
     except sp.CalledProcessError:
         print(cmd)
         raise NameError("Unknown git reference '%s'" % ref)
     commit = output.split('\n')[0]
-    assert commit[:7] == 'commit '
-    return commit[7:]
+    return commit
 
 
 def runSubprocess(command, return_code=False, **kwargs):

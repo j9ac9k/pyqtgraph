@@ -270,6 +270,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.fps = self.fps * (1-s) + (1.0/dt) * s
         ui.fpsLabel.setText('%0.2f fps' % self.fps)
         QtCore.QCoreApplication.processEvents()  ## force complete redraw for every plot
+    
+    def closeEvent(self, event):
+        self.timer.disconnect()
+        return super().closeEvent(event)
 
 mainwin = MainWindow()
 

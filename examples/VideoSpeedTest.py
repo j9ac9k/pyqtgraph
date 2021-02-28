@@ -126,7 +126,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.timer = QtCore.QTimer(parent=self.img)
         self.timer.timeout.connect(self.update)
-        self.timer.start()
+        self.timer.start(1)
 
     def connect_signals(self):
         ui = self.ui

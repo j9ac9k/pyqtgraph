@@ -106,8 +106,9 @@ jobs:
     - name: Run Tests
       run: |
         mkdir $SCREENSHOT_DIR
-        pytest . -v \
+        pytest . -s -v \
           --junitxml pytest.xml
+          -n auto
       shell: bash
     - name: Upload Screenshots
       uses: actions/upload-artifact@v2

@@ -82,6 +82,23 @@ l6 = pg.PlotDataItem(y)
 v6.addItem(l6)
 
 
+l1.setParent(v1)
+v1.setParent(win)
+
+l2.setParent(v2)
+v2.setParent(win)
+
+l3.setParent(v3)
+v3.setParent(win)
+
+l4.setParent(v4)
+v4.setParent(win)
+
+l5.setParent(v5)
+v5.setParent(win)
+
+l6.setParent(v6)
+v6.setParent(win)
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':

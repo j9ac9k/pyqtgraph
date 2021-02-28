@@ -502,7 +502,7 @@ def eq(a, b):
         return True
 
     # Test for equivalence. 
-    # If the test raises a recognized exception, then return Falase
+    # If the test raises a recognized exception, then return False
     try:
         try:
             # Sometimes running catch_warnings(module=np) generates AttributeError ???
@@ -514,7 +514,7 @@ def eq(a, b):
     except (ValueError, AttributeError): 
         return False
     except:
-        print('failed to evaluate equivalence for:')
+        print('functions.eq could not evaluate equivalence for:')
         print("  a:", str(type(a)), str(a))
         print("  b:", str(type(b)), str(b))
         raise

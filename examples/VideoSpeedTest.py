@@ -123,7 +123,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mkData()
 
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.update)
+        self.timer.timeout.connect(self.update_cycle)
         self.timer.start(1)
 
     def connect_signals(self):
@@ -223,7 +223,7 @@ class MainWindow(QtWidgets.QMainWindow):
             xp = np
         self.mkData()
 
-    def update(self):
+    def update_cycle(self):
         ui = self.ui
         ptr = self.ptr
         data = self.data

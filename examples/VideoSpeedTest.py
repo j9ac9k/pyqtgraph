@@ -125,6 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mkData()
 
         self.timer = QtCore.QTimer(parent=self.img)
+        self.timer.setTimerType(pg.QtCore.Qt.PreciseTimer)
         self.timer.timeout.connect(self.update)
         self.timer.start(1)
 

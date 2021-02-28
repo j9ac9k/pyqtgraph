@@ -26,9 +26,10 @@ def update():
     curve.setData(np.hstack(data))
     count += 1
 
-timer = QtCore.QTimer()
+timer = QtCore.QTimer(parent=win)
 timer.timeout.connect(update)
 timer.start(50)
+
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':

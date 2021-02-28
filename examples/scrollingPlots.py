@@ -105,7 +105,7 @@ def update():
     update1()
     update2()
     update3()
-timer = pg.QtCore.QTimer()
+timer = pg.QtCore.QTimer(parent=win)
 timer.timeout.connect(update)
 timer.start(50)
 

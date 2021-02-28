@@ -16,6 +16,7 @@ from itertools import chain
 
 app = pg.mkQApp("Scatter Plot Item Example") 
 mw = QtGui.QMainWindow()
+
 mw.resize(800,800)
 view = pg.GraphicsLayoutWidget()  ## GraphicsView with GraphicsLayout inserted by default
 mw.setCentralWidget(view)
@@ -134,6 +135,11 @@ s4.addPoints(
 w4.addItem(s4)
 s4.sigClicked.connect(clicked)
 
+
+w1.setParent(view)
+w2.setParent(view)
+w3.setParent(view)
+w4.setParent(view)
 
 ## Start Qt event loop unless running in interactive mode.
 if __name__ == '__main__':

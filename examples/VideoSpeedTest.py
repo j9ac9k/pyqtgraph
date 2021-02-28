@@ -124,7 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateScale()
         self.mkData()
 
-        self.timer = QtCore.QTimer(parent=self.vb)
+        self.timer = QtCore.QTimer(parent=self.img)
         self.timer.timeout.connect(self.update)
         self.timer.start()
 

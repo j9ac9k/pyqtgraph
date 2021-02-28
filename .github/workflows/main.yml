@@ -106,7 +106,7 @@ jobs:
     - name: Run Tests
       run: |
         mkdir $SCREENSHOT_DIR
-        pytest -k "ViewSpeedTest or ScrollingPlots or ViewBoxFeatures or ScatterPlot or PanningPlot" -v \
+        pytest . -v \
           --junitxml pytest.xml
       shell: bash
     - name: Upload Screenshots

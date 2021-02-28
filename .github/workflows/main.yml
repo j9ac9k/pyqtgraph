@@ -108,7 +108,6 @@ jobs:
         mkdir $SCREENSHOT_DIR
         pytest . -s -v \
           --junitxml pytest.xml
-          -n auto
       shell: bash
     - name: Upload Screenshots
       uses: actions/upload-artifact@v2

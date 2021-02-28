@@ -140,6 +140,10 @@ w1.setParent(view)
 w2.setParent(view)
 w3.setParent(view)
 w4.setParent(view)
+s1.setParent(view)
+s2.setParent(view)
+s3.setParent(view)
+s4.setParent(view)
 
 ## Start Qt event loop unless running in interactive mode.
 if __name__ == '__main__':

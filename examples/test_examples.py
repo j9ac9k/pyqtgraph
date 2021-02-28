@@ -167,7 +167,7 @@ try:
     print("test complete")
     sys.stdout.flush()
     if hasattr({1}, 'main') and callable({1}.main):
-        {1}.main(1000)
+        {1}.main(duration=1.0)
     else:
         pg.Qt.QtCore.QTimer.singleShot(1000, pg.Qt.QtWidgets.QApplication.quit)
         pg.Qt.QtWidgets.QApplication.instance().exec_()

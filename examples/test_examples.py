@@ -159,20 +159,23 @@ def testExamples(frontend, f):
     import2 = os.path.splitext(os.path.split(fn)[1])[0]
     code = """
 try:
-    %s
+    {0}
     import initExample
     import pyqtgraph as pg
-    import %s
+    import {1}
     import sys
     print("test complete")
     sys.stdout.flush()
-    pg.Qt.QtCore.QTimer.singleShot(1000, pg.Qt.QtWidgets.QApplication.quit)
-    pg.Qt.QtWidgets.QApplication.instance().exec_()
+    if hasattr({1}, 'main') and callable({1}.main):
+        {1}.main(1000)
+    else:
+        pg.Qt.QtCore.QTimer.singleShot(1000, pg.Qt.QtWidgets.QApplication.quit)
+        pg.Qt.QtWidgets.QApplication.instance().exec_()
 except:
     print("test failed")
     raise
 
-""" % (import1, import2)
+""".format(import1, import2)
     if sys.platform.startswith('win'):
         process = subprocess.Popen([sys.executable],
                                     stdin=subprocess.PIPE,

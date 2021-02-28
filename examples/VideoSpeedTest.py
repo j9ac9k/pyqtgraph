@@ -270,10 +270,12 @@ class MainWindow(QtWidgets.QMainWindow):
         QtCore.QCoreApplication.processEvents()  ## force complete redraw for every plot
 
 
-def main(duration_ms=None):
+def main(*args, **kwargs):
     pg.mkQApp("Video Speed Test Example")
     win = MainWindow()
-    if duration_ms is not None:
+    duration = kwargs.get('duration')
+    if duration is not None:
+        duration_ms = int(duration * 1000)
         pg.Qt.QtCore.QTimer.singleShot(duration_ms, pg.Qt.QtWidgets.QApplication.quit)
     pg.Qt.QtWidgets.QApplication.instance().exec_()
 

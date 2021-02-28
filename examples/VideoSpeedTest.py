@@ -272,7 +272,7 @@ class MainWindow(QtWidgets.QMainWindow):
         QtCore.QCoreApplication.processEvents()  ## force complete redraw for every plot
     
     def closeEvent(self, event):
-        self.timer.blockSignals(True)
+        self.timer.disconnect(self.update)
         return super().closeEvent(event)
 
 mainwin = MainWindow()

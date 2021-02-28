@@ -483,9 +483,11 @@ def getTestDataRepo():
 
         # Get the commit ID of testDataTag. Do a fetch if necessary.
         try:
+            print("trying to get git commit tag")
             tagCommit = gitCommitId(dataPath, testDataTag)
         except NameError:
             cmd = gitbase + ['fetch', '--tags', 'origin']
+            print("Got NameError, trying:")
             print(' '.join(cmd))
             sp.check_call(cmd)
             try:
@@ -504,7 +506,7 @@ def getTestDataRepo():
         # If HEAD is not the correct commit, then do a checkout
         if gitCommitId(dataPath, 'HEAD') != tagCommit:
             print("Checking out test-data tag '%s'" % testDataTag)
-            sp.check_call(gitbase + ['checkout', testDataTag])
+            sp.check_call(gitbase + ['checkout', f"tags/{testDataTag}", "-b", testDataTag])
 
     else:
         print("Attempting to create git clone of test data repo in %s.." %
@@ -527,7 +529,7 @@ def getTestDataRepo():
             ]
         else:
             # Create a full clone
-            cmds = [['git', 'clone', gitPath, dataPath]]
+            cmds = [['git', 'clone', gitPath, "--", dataPath]]
 
         for cmd in cmds:
             print(' '.join(cmd))

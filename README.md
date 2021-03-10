@@ -94,7 +94,7 @@ Here is a partial listing of some of the applications that make use of PyQtGraph
 
 * [ACQ4](https://github.com/acq4/acq4)
 * [Orange3](https://orangedatamining.com/)
-* [neurotic](neurotic)
+* [neurotic](https://github.com/jpgill86/neurotic)
 * [Joulescope](https://www.joulescope.com/)
 * [rapidtide](https://rapidtide.readthedocs.io/en/latest/)
 * [argos](https://github.com/titusjan/argos)

@@ -1,7 +1,7 @@
 import sys
 import pytest
 
-from pyqtgraph.Qt import QtCore, QtGui, QT_LIB, PYSIDE
+from pyqtgraph.Qt import QtCore, QtGui, QT_LIB, mkQApp
 from pyqtgraph import SignalProxy
 
 
@@ -24,13 +24,11 @@ class Receiver(QtCore.QObject):
 
 @pytest.fixture
 def qapp():
-    app = QtGui.QApplication.instance()
+    app = mkQApp()
     if app is None:
         app = QtGui.QApplication(sys.argv)
     yield app
-
     app.processEvents(QtCore.QEventLoop.AllEvents, 100)
-    app.deleteLater()
 
 
 def test_signal_proxy_slot(qapp):
@@ -54,9 +52,6 @@ def test_signal_proxy_slot(qapp):
     del sender
     del receiver
 
-
-@pytest.mark.skipif(QT_LIB == PYSIDE and sys.version_info < (2, 8),
-                    reason="Crashing on PySide and Python 2.7")
 def test_signal_proxy_disconnect_slot(qapp):
     """Test the disconnect of SignalProxy with `signal` and `slot`"""
     sender = Sender(parent=qapp)

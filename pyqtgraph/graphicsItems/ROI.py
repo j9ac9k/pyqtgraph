@@ -795,17 +795,21 @@ class ROI(GraphicsObject):
         self.mouseDragHandler.mouseDragEvent(ev)
 
     def mouseClickEvent(self, ev):
-        if ev.button() == QtCore.Qt.RightButton and self.isMoving:
-            ev.accept()
-            self.cancelMove()
-        if ev.button() == QtCore.Qt.RightButton and self.contextMenuEnabled():
-            self.raiseContextMenu(ev)
-            ev.accept()
-        elif ev.button() & self.acceptedMouseButtons() > 0:
-            ev.accept()
-            self.sigClicked.emit(self, ev)
-        else:
-            ev.ignore()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # warnings emitted on Qt 5.12 + Python 3.8 Combinations
+            # involving automatic __int__ conversion
+            if ev.button() == QtCore.Qt.RightButton and self.isMoving:
+                ev.accept()
+                self.cancelMove()
+            if ev.button() == QtCore.Qt.RightButton and self.contextMenuEnabled():
+                self.raiseContextMenu(ev)
+                ev.accept()
+            elif ev.button() & self.acceptedMouseButtons():
+                ev.accept()
+                self.sigClicked.emit(self, ev)
+            else:
+                ev.ignore()
 
     def _moveStarted(self):
         self.isMoving = True
@@ -1400,18 +1404,22 @@ class Handle(UIGraphicsItem):
         self.update()
 
     def mouseClickEvent(self, ev):
-        ## right-click cancels drag
-        if ev.button() == QtCore.Qt.RightButton and self.isMoving:
-            self.isMoving = False  ## prevents any further motion
-            self.movePoint(self.startPos, finish=True)
-            ev.accept()
-        elif ev.button() & self.acceptedMouseButtons():
-            ev.accept()
-            if ev.button() == QtCore.Qt.RightButton and self.deletable:
-                self.raiseContextMenu(ev)
-            self.sigClicked.emit(self, ev)
-        else:
-            ev.ignore()        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # warnings emitted on Qt 5.12 + Python 3.8 Combinations
+            # involving automatic __int__ conversion
+            ## right-click cancels drag
+            if ev.button() == QtCore.Qt.RightButton and self.isMoving:
+                self.isMoving = False  ## prevents any further motion
+                self.movePoint(self.startPos, finish=True)
+                ev.accept()
+            elif ev.button() & self.acceptedMouseButtons():
+                ev.accept()
+                if ev.button() == QtCore.Qt.RightButton and self.deletable:
+                    self.raiseContextMenu(ev)
+                self.sigClicked.emit(self, ev)
+            else:
+                ev.ignore()        
                 
     def buildMenu(self):
         menu = QtGui.QMenu()

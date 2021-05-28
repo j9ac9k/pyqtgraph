@@ -103,6 +103,7 @@ jobs:
         mkdir $SCREENSHOT_DIR
         pytest tests examples -v \
           --junitxml pytest.xml \
+          -k "not examples and not HistogramLUT"
       shell: bash
     - name: Upload Screenshots
       uses: actions/upload-artifact@v2

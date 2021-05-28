@@ -184,6 +184,3 @@ def clean_state(state):
     ch = [clean_state(x) for x in state[1]] if isinstance(state[1], list) else state[1]
     state = (state[0], ch, {})
 
-
-if __name__ == '__main__':
-    test_dockarea()

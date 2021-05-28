@@ -101,7 +101,7 @@ jobs:
     - name: Run Tests
       run: |
         mkdir $SCREENSHOT_DIR
-        pytest pyqtgraph examples -v \
+        pytest tests examples -v \
           --junitxml pytest.xml \
       shell: bash
     - name: Upload Screenshots

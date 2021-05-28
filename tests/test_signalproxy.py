@@ -1,7 +1,7 @@
 import sys
 import pytest
 
-from pyqtgraph.Qt import QtCore, QtGui, QT_LIB, mkQApp
+from pyqtgraph.Qt import QtCore, QtGui, mkQApp
 from pyqtgraph import SignalProxy
 
 
@@ -26,7 +26,7 @@ class Receiver(QtCore.QObject):
 def qapp():
     app = mkQApp()
     if app is None:
-        app = QtGui.QApplication(sys.argv)
+        app = mkQApp()
     yield app
     app.processEvents(QtCore.QEventLoop.AllEvents, 100)
 

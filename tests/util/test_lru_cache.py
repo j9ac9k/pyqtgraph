@@ -22,7 +22,7 @@ def checkLru(lru):
 
     lru[2] = 2
     assert set([2, 3]) == set(lru.values())
-    
+
     lru[1] = 1
     set([2, 1]) == set(lru.values())
 
@@ -44,12 +44,9 @@ def checkLru(lru):
     assert [(1, 1), (2, 2)] == list(lru.items(accessTime=True))
 
     assert lru.get(2) == 2
-    assert lru.get(3) == None
+    assert lru.get(3) is None
     assert [(1, 1), (2, 2)] == list(lru.items(accessTime=True))
 
     lru.clear()
     assert [] == list(lru.items())
 
-
-if __name__ == '__main__':
-    testLRU()

@@ -1,11 +1,8 @@
 import sys
 import pytest
 
-from ..Qt import QtCore
-from ..Qt import QtGui
-from ..Qt import QT_LIB, PYSIDE
-
-from ..SignalProxy import SignalProxy
+from pyqtgraph.Qt import QtCore, QtGui, QT_LIB, PYSIDE
+from pyqtgraph import SignalProxy
 
 
 class Sender(QtCore.QObject):

@@ -5,7 +5,7 @@ import pytest
 from pyqtgraph.Qt import QtCore, QtGui, QtTest
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.tests import assertImageApproved, TransposedImageItem
+from tests.image_testing import assertImageApproved, TransposedImageItem
 try:
     import cupy
 except ImportError:

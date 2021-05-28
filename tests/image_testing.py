@@ -24,10 +24,10 @@ import numpy as np
 
 from pathlib import Path
 
-from ..Qt import QtGui, QtCore, QT_LIB
-from .. import functions as fn
-from .. import GraphicsLayoutWidget
-from .. import ImageItem, TextItem
+from pyqtgraph.Qt import QtGui, QtCore, QT_LIB
+from pyqtgraph import functions as fn
+from pyqtgraph import GraphicsLayoutWidget
+from pyqtgraph import ImageItem, TextItem
 
 
 tester = None
@@ -415,7 +415,7 @@ def scenegraphState(view, name):
     
 def itemState(root):
     state = str(root) + '\n'
-    from .. import ViewBox
+    from pyqtgraph import ViewBox
     state += 'bounding rect: ' + str(root.boundingRect()) + '\n'
     if isinstance(root, ViewBox):
         state += "view range: " + str(root.viewRange()) + '\n'

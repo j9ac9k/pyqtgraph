@@ -1,5 +1,5 @@
 import time
-from ..Qt import QtCore, QtGui, QtTest
+from pyqtgraph.Qt import QtCore, QtGui, QtTest
 
 
 def resizeWindow(win, w, h, timeout=2.0):

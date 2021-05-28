@@ -2,7 +2,7 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtTest
 from pyqtgraph.graphicsItems.NonUniformImage import NonUniformImage
-from pyqtgraph.tests import assertImageApproved
+from tests.image_testing import assertImageApproved
 from pyqtgraph.colormap import ColorMap
 import pyqtgraph.functions as fn
 import pytest

@@ -1,6 +1,6 @@
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.tests import assertImageApproved
+from tests.image_testing import assertImageApproved
 
 
 def test_PlotCurveItem():

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore, QtTest
-from pyqtgraph.tests import mouseDrag, mouseMove
+from tests.ui_testing import mouseDrag, mouseMove
 pg.mkQApp()
 
 

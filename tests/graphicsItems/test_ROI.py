@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtTest
-from pyqtgraph.tests import assertImageApproved, mouseMove, mouseDrag, mouseClick, TransposedImageItem, resizeWindow
-import pytest
+from tests.image_testing import assertImageApproved
+from tests.ui_testing import mouseMove, mouseDrag, mouseClick, resizeWindow
 
 app = pg.mkQApp()
 pg.setConfigOption("mouseRateLimit", 0)

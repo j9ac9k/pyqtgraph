@@ -3,65 +3,28 @@
 """
 Procedure for unit-testing with images:
 
-1. Run unit tests at least once; this initializes a git clone of
-   pyqtgraph/test-data in ~/.pyqtgraph.
-
-2. Run individual test scripts with the PYQTGRAPH_AUDIT environment variable set:
+    Run individual test scripts with the PYQTGRAPH_AUDIT environment variable set:
 
        $ PYQTGRAPH_AUDIT=1 python pyqtgraph/graphicsItems/tests/test_PlotCurveItem.py
 
-   Any failing tests will display the test results, standard image, and the
-   differences between the two. If the test result is bad, then press (f)ail.
-   If the test result is good, then press (p)ass and the new image will be
-   saved to the test-data directory.
-   
-   To check all test results regardless of whether the test failed, set the
-   environment variable PYQTGRAPH_AUDIT_ALL=1.
+    Any failing tests will display the test results, standard image, and the
+    differences between the two. If the test result is bad, then press (f)ail.
+    If the test result is good, then press (p)ass and the new image will be
+    saved to the test-data directory.
 
-3. After adding or changing test images, create a new commit:
-
-        $ cd ~/.pyqtgraph/test-data
-        $ git add ...
-        $ git commit -a
-
-4. Look up the most recent tag name from the `testDataTag` global variable
-   below. Increment the tag name by 1 and create a new tag in the test-data
-   repository:
-
-        $ git tag test-data-NNN
-        $ git push --tags origin master
-
-    This tag is used to ensure that each pyqtgraph commit is linked to a specific
-    commit in the test-data repository. This makes it possible to push new
-    commits to the test-data repository without interfering with existing
-    tests, and also allows unit tests to continue working on older pyqtgraph
-    versions.
-
+    To check all test results regardless of whether the test failed, set the
+    environment variable PYQTGRAPH_AUDIT_ALL=1.
 """
-
-
-# This is the name of a tag in the test-data repository that this version of
-# pyqtgraph should be tested against. When adding or changing test images,
-# create and push a new tag and update this variable. To test locally, begin
-# by creating the tag in your ~/.pyqtgraph/test-data repository.
-testDataTag = 'test-data-8'
-
 
 import time
 import os
 import sys
 import inspect
-import base64
-import subprocess as sp
 import numpy as np
 
-if sys.version[0] >= '3':
-    import http.client as httplib
-    import urllib.parse as urllib
-else:
-    import httplib
-    import urllib
-from ..Qt import QtGui, QtCore, QtTest, QT_LIB
+from pathlib import Path
+
+from ..Qt import QtGui, QtCore, QT_LIB
 from .. import functions as fn
 from .. import GraphicsLayoutWidget
 from .. import ImageItem, TextItem
@@ -132,8 +95,8 @@ def assertImageApproved(image, standardFile, message=None, **kwargs):
     """
     if isinstance(image, QtGui.QWidget):
         w = image
-        
-            # just to be sure the widget size is correct (new window may be resized):
+
+        # just to be sure the widget size is correct (new window may be resized):
         QtGui.QApplication.processEvents()
 
         graphstate = scenegraphState(w, standardFile)
@@ -142,7 +105,7 @@ def assertImageApproved(image, standardFile, message=None, **kwargs):
         painter = QtGui.QPainter(qimg)
         w.render(painter)
         painter.end()
-        
+
         image = fn.imageToArray(qimg, copy=False, transpose=False)
 
         # the standard images seem to have their Red and Blue swapped
@@ -157,7 +120,7 @@ def assertImageApproved(image, standardFile, message=None, **kwargs):
         code = inspect.currentframe().f_back.f_code
         message = "%s::%s" % (code.co_filename, code.co_name)
 
-    # Make sure we have a test data repo available, possibly invoking git
+    # Make sure we have a test data repo available
     dataPath = getTestDataRepo()
 
     # Read the standard image if it exists
@@ -191,18 +154,13 @@ def assertImageApproved(image, standardFile, message=None, **kwargs):
             image = fn.downsample(image, sr[0], axis=(0, 1)).astype(image.dtype)
 
         assertImageMatch(image, stdImage, **kwargs)
-        
+
         if bool(os.getenv('PYQTGRAPH_PRINT_TEST_STATE', False)):
             print(graphstate)
-            
+
         if os.getenv('PYQTGRAPH_AUDIT_ALL') == '1':
             raise Exception("Image test passed, but auditing due to PYQTGRAPH_AUDIT_ALL evnironment variable.")
     except Exception:
-
-        if stdFileName in gitStatus(dataPath):
-            print("\n\nWARNING: unit test failed against modified standard "
-                  "image %s.\nTo revert this file, run `cd %s; git checkout "
-                  "%s`\n" % (stdFileName, dataPath, standardFile))
         if os.getenv('PYQTGRAPH_AUDIT') == '1' or os.getenv('PYQTGRAPH_AUDIT_ALL') == '1':
             sys.excepthook(*sys.exc_info())
             getTester().test(image, stdImage, message)
@@ -216,14 +174,11 @@ def assertImageApproved(image, standardFile, message=None, **kwargs):
             if stdImage is None:
                 raise Exception("Test standard %s does not exist. Set "
                                 "PYQTGRAPH_AUDIT=1 to add this image." % stdFileName)
-            else:
-                if os.getenv('TRAVIS') is not None:
-                    saveFailedTest(image, stdImage, standardFile, upload=True)
-                elif os.getenv('CI') is not None:
-                    standardFile = os.path.join(os.getenv("SCREENSHOT_DIR", "screenshots"), standardFile)
-                    saveFailedTest(image, stdImage, standardFile)
-                print(graphstate)
-                raise
+            if os.getenv('CI') is not None:
+                standardFile = os.path.join(os.getenv("SCREENSHOT_DIR", "screenshots"), standardFile)
+                saveFailedTest(image, stdImage, standardFile)
+            print(graphstate)
+            raise
 
 
 def assertImageMatch(im1, im2, minCorr=None, pxThreshold=50.,
@@ -292,9 +247,7 @@ def assertImageMatch(im1, im2, minCorr=None, pxThreshold=50.,
         assert corr >= minCorr
 
 
-def saveFailedTest(data, expect, filename, upload=False):
-    """Upload failed test images to web server to allow CI test debugging.
-    """
+def saveFailedTest(data, expect, filename):
     # concatenate data, expect, and diff into a single image
     ds = data.shape
     es = expect.shape
@@ -318,28 +271,6 @@ def saveFailedTest(data, expect, filename, upload=False):
         png_file.write(png)
     print("\nImage comparison failed. Test result: %s %s   Expected result: "
         "%s %s" % (data.shape, data.dtype, expect.shape, expect.dtype))
-    if upload:
-        uploadFailedTest(filename, png)
-
-
-def uploadFailedTest(filename, png):
-    commit = runSubprocess(['git', 'rev-parse',  'HEAD'])
-    name = filename.split(os.path.sep)
-    name.insert(-1, commit.strip())
-    filename = os.path.sep.join(name)
-
-    host = 'data.pyqtgraph.org'
-    conn = httplib.HTTPConnection(host)
-    req = urllib.urlencode({'name': filename,
-                            'data': base64.b64encode(png)})
-    conn.request('POST', '/upload.py', req)
-    response = conn.getresponse().read()
-    conn.close()
-
-    print("Uploaded to: \nhttp://%s/data/%s" % (host, filename))
-    if not response.startswith(b'OK'):
-        print("WARNING: Error uploading data to %s" % host)
-        print(response)
 
 
 def makePng(img):
@@ -348,8 +279,7 @@ def makePng(img):
     io = QtCore.QBuffer()
     qim = fn.makeQImage(img.transpose(1, 0, 2), alpha=False)
     qim.save(io, 'PNG')
-    png = bytes(io.data().data())
-    return png
+    return bytes(io.data().data())
 
 
 def makeDiffImage(im1, im2):
@@ -467,155 +397,8 @@ class ImageTester(QtGui.QWidget):
 
 
 def getTestDataRepo():
-    """Return the path to a git repository with the required commit checked
-    out.
-
-    If the repository does not exist, then it is cloned from
-    https://github.com/pyqtgraph/test-data. If the repository already exists
-    then the required commit is checked out.
-    """
-    global testDataTag
-
-    if os.getenv("CI"):
-        dataPath = os.path.join(os.environ["GITHUB_WORKSPACE"], '.pyqtgraph', 'test-data')
-    else:
-        dataPath = os.path.join(os.path.expanduser('~'), '.pyqtgraph', 'test-data')
-    gitPath = 'https://github.com/pyqtgraph/test-data'
-    gitbase = gitCmdBase(dataPath)
-
-    if os.path.isdir(dataPath):
-        # Already have a test-data repository to work with.
-
-        # Get the commit ID of testDataTag. Do a fetch if necessary.
-        try:
-            tagCommit = gitCommitId(dataPath, testDataTag)
-        except NameError:
-            cmd = gitbase + ['fetch', '--tags', 'origin']
-            print(' '.join(cmd))
-            sp.check_call(cmd)
-            try:
-                tagCommit = gitCommitId(dataPath, testDataTag)
-            except NameError:
-                raise Exception("Could not find tag '%s' in test-data repo at"
-                                " %s" % (testDataTag, dataPath))
-        except Exception:
-            if not os.path.exists(os.path.join(dataPath, '.git')):
-                raise Exception("Directory '%s' does not appear to be a git "
-                                "repository. Please remove this directory." %
-                                dataPath)
-            else:
-                raise
-
-        # If HEAD is not the correct commit, then do a checkout
-        if gitCommitId(dataPath, 'HEAD') != tagCommit:
-            print("Checking out test-data tag '%s'" % testDataTag)
-            sp.check_call(gitbase + ['checkout', testDataTag])
-
-    else:
-        print("Attempting to create git clone of test data repo in %s.." %
-              dataPath)
-
-        parentPath = os.path.split(dataPath)[0]
-        if not os.path.isdir(parentPath):
-            os.makedirs(parentPath)
-
-        if os.getenv('TRAVIS') is not None or os.getenv('CI') is not None:
-            # Create a shallow clone of the test-data repository (to avoid
-            # downloading more data than is necessary)
-            os.makedirs(dataPath)
-            cmds = [
-                gitbase + ['init'],
-                gitbase + ['remote', 'add', 'origin', gitPath],
-                gitbase + ['fetch', '--tags', 'origin', testDataTag,
-                           '--depth=1'],
-                gitbase + ['checkout', '-b', 'master', 'FETCH_HEAD'],
-            ]
-        else:
-            # Create a full clone
-            cmds = [['git', 'clone', gitPath, dataPath]]
-
-        for cmd in cmds:
-            print(' '.join(cmd))
-            rval = sp.check_call(cmd)
-            if rval == 0:
-                continue
-            raise RuntimeError("Test data path '%s' does not exist and could "
-                               "not be created with git. Please create a git "
-                               "clone of %s at this path." %
-                               (dataPath, gitPath))
-
-    return dataPath
-
-
-def gitCmdBase(path):
-    return ['git', '--git-dir=%s/.git' % path, '--work-tree=%s' % path]
-
-
-def gitStatus(path):
-    """Return a string listing all changes to the working tree in a git
-    repository.
-    """
-    cmd = gitCmdBase(path) + ['status', '--porcelain']
-    return runSubprocess(cmd, stderr=None, universal_newlines=True)
-
-
-def gitCommitId(path, ref):
-    """Return the commit id of *ref* in the git repository at *path*.
-    """
-    cmd = gitCmdBase(path) + ['show', ref]
-    try:
-        output = runSubprocess(cmd, stderr=None, universal_newlines=True)
-    except sp.CalledProcessError:
-        print(cmd)
-        raise NameError("Unknown git reference '%s'" % ref)
-    commit = output.split('\n')[0]
-    assert commit[:7] == 'commit '
-    return commit[7:]
-
-
-def runSubprocess(command, return_code=False, **kwargs):
-    """Run command using subprocess.Popen
-    
-    Similar to subprocess.check_output(), which is not available in 2.6.
-
-    Run command and wait for command to complete. If the return code was zero
-    then return, otherwise raise CalledProcessError.
-    By default, this will also add stdout= and stderr=subproces.PIPE
-    to the call to Popen to suppress printing to the terminal.
-
-    Parameters
-    ----------
-    command : list of str
-        Command to run as subprocess (see subprocess.Popen documentation).
-    **kwargs : dict
-        Additional kwargs to pass to ``subprocess.Popen``.
-
-    Returns
-    -------
-    stdout : str
-        Stdout returned by the process.
-    """
-    # code adapted with permission from mne-python
-    use_kwargs = dict(stderr=None, stdout=sp.PIPE)
-    use_kwargs.update(kwargs)
-
-    p = sp.Popen(command, **use_kwargs)
-    output = p.communicate()[0]
-
-    # communicate() may return bytes, str, or None depending on the kwargs
-    # passed to Popen(). Convert all to unicode str:
-    output = '' if output is None else output
-    output = output.decode('utf-8') if isinstance(output, bytes) else output
-
-    if p.returncode != 0:
-        print(output)
-        err_fun = sp.CalledProcessError.__init__
-        if 'output' in inspect.getfullargspec(err_fun).args:
-            raise sp.CalledProcessError(p.returncode, command, output)
-        else:
-            raise sp.CalledProcessError(p.returncode, command)
-    
-    return output
+    dataPath = Path(__file__).absolute().parent / "images"
+    return dataPath.as_posix()
 
 
 def scenegraphState(view, name):
@@ -647,7 +430,7 @@ def transformStr(t):
 
 
 def indent(s, pfx):
-    return '\n'.join([pfx+line for line in s.split('\n')])
+    return '\n'.join(pfx+line for line in s.split('\n'))
 
 
 class TransposedImageItem(ImageItem):

@@ -95,7 +95,7 @@ def createWidget():
     p('create widget')
     global widgets, allWidgets
     if len(widgets) > 50:
-        return
+        return None
     widget = randItem(widgetTypes)()
     widget.setWindowTitle(widget.__class__.__name__)
     widgets.append(widget)

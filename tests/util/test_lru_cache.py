@@ -37,10 +37,10 @@ def checkLru(lru):
     lru[2] = 2
     assert [(1, 1), (2, 2)] == list(lru.items(accessTime=True))
 
-    _a = lru[1]
+    _ = lru[1]
     assert [(2, 2), (1, 1)] == list(lru.items(accessTime=True))
 
-    _a = lru[2]
+    _ = lru[2]
     assert [(1, 1), (2, 2)] == list(lru.items(accessTime=True))
 
     assert lru.get(2) == 2

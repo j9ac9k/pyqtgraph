@@ -1,7 +1,6 @@
-import sys
 import pytest
 
-from pyqtgraph.Qt import QtCore, QtGui, mkQApp
+from pyqtgraph.Qt import QtCore, mkQApp
 from pyqtgraph import SignalProxy
 
 

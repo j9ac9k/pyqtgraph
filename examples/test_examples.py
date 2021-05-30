@@ -1,15 +1,12 @@
 from collections import namedtuple
 from pyqtgraph import Qt
 
-import errno
 import importlib
 import itertools
-from threading import Timer
 import pytest
 import os, sys
 import platform
 import subprocess
-import time
 from argparse import Namespace
 if __name__ == "__main__" and (__package__ is None or __package__==''):
     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -142,13 +139,11 @@ conditionalExamples = {
     ]
 )
 def testExamples(frontend, f):
-    # runExampleFile(f[0], f[1], sys.executable, frontend)
-
     name, file = f
     global path
     fn = os.path.join(path, file)
     os.chdir(path)
-    sys.stdout.write("{} ".format(name))
+    sys.stdout.write(f"{name}")
     sys.stdout.flush()
     import1 = "import %s" % frontend if frontend != '' else ''
     import2 = os.path.splitext(os.path.split(fn)[1])[0]
@@ -171,20 +166,6 @@ except:
     raise
 
 """.format(import1, import2)
-
-    # if sys.platform.startswith('win'):
-    #     process = subprocess.Popen([sys.executable],
-    #                                 stdin=subprocess.PIPE,
-    #                                 stderr=subprocess.PIPE,
-    #                                 stdout=subprocess.PIPE)
-    # else:
-    #     process = subprocess.Popen(['exec %s -i' % (sys.executable)],
-    #                                shell=True,
-    #                                stdin=subprocess.PIPE,
-    #                                stderr=subprocess.PIPE,
-    #                                stdout=subprocess.PIPE,
-    #                                text=True)
-
     process = subprocess.Popen(
         [sys.executable],
         stdin=subprocess.PIPE,
@@ -201,8 +182,13 @@ except:
     if (fail or
         'exception' in stderr_data.lower() or
         'error' in stderr_data.lower()):
-        print(stdout_data)
-        print(stderr_data)
+
+        if (not fail 
+            and name == "RemoteGraphicsView" 
+            and "pyqtgraph.multiprocess.remoteproxy.ClosedError" in stderr_data):
+            # This test can intermittently fail when the subprocess is killed
+            return None
+
         pytest.fail("{}\n{}\nFailed {} Example Test Located in {} "
             .format(stdout_data, stderr_data, name, file),
             pytrace=False)

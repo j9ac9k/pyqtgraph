@@ -20,6 +20,7 @@ import time
 import os
 import sys
 import inspect
+import warnings
 import numpy as np
 
 from pathlib import Path
@@ -64,16 +65,35 @@ def getTester():
     return tester
 
 
+def getImageFromWidget(widget):
+
+    # just to be sure the widget size is correct (new window may be resized):
+    QtGui.QApplication.processEvents()
+
+    qimg = QtGui.QImage(widget.size(), QtGui.QImage.Format.Format_ARGB32)
+    qimg.fill(QtCore.Qt.GlobalColor.transparent)
+    painter = QtGui.QPainter(qimg)
+    widget.render(painter)
+    painter.end()
+
+    image = fn.imageToArray(qimg, copy=True, transpose=False)
+
+    # the standard images seem to have their Red and Blue swapped
+    if sys.byteorder == 'little':
+        # transpose B,G,R,A to R,G,B,A
+        image = image[..., [2, 1, 0, 3]]
+    else:
+        # transpose A,R,G,B to A,B,G,R
+        image = image[..., [0, 3, 2, 1]]
+    return image
+
+
 def assertImageApproved(image, standardFile, message=None, **kwargs):
     """Check that an image test result matches a pre-approved standard.
 
     If the result does not match, then the user can optionally invoke a GUI
     to compare the images and decide whether to fail the test or save the new
     image as the standard.
-
-    This function will automatically clone the test-data repository into
-    ~/.pyqtgraph/test-data. However, it is up to the user to ensure this repository
-    is kept up to date and to commit/push new images after they are saved.
 
     Run the test with the environment variable PYQTGRAPH_AUDIT=1 to bring up
     the auditing GUI.
@@ -94,34 +114,19 @@ def assertImageApproved(image, standardFile, message=None, **kwargs):
     comparison (see ``assertImageMatch()``).
     """
     if isinstance(image, QtGui.QWidget):
-        w = image
 
         # just to be sure the widget size is correct (new window may be resized):
         QtGui.QApplication.processEvents()
 
-        graphstate = scenegraphState(w, standardFile)
-        qimg = QtGui.QImage(w.size(), QtGui.QImage.Format.Format_ARGB32)
-        qimg.fill(QtCore.Qt.GlobalColor.transparent)
-        painter = QtGui.QPainter(qimg)
-        w.render(painter)
-        painter.end()
-
-        image = fn.imageToArray(qimg, copy=False, transpose=False)
-
-        # the standard images seem to have their Red and Blue swapped
-        if sys.byteorder == 'little':
-            # transpose B,G,R,A to R,G,B,A
-            image = image[..., [2, 1, 0, 3]]
-        else:
-            # transpose A,R,G,B to A,B,G,R
-            image = image[..., [0, 3, 2, 1]]
+        graphstate = scenegraphState(image, standardFile)
+        image = getImageFromWidget(image)
 
     if message is None:
         code = inspect.currentframe().f_back.f_code
         message = "%s::%s" % (code.co_filename, code.co_name)
 
     # Make sure we have a test data repo available
-    dataPath = getTestDataRepo()
+    dataPath = getTestDataDirectory()
 
     # Read the standard image if it exists
     stdFileName = os.path.join(dataPath, standardFile + '.png')
@@ -392,8 +397,18 @@ class ImageTester(QtGui.QWidget):
 
 
 def getTestDataRepo():
+    warnings.warn(
+        "Test data data repo has been merged with the main repo"
+        "use getTestImagePath() instead, this method will be removed"
+        "in a future version of pyqtgraph",
+        DeprecationWarning, stacklevel=2
+    )
+    return getTestImagePath()
+
+
+def getTestDataDirectory():
     dataPath = Path(__file__).absolute().parent / "images"
-    return dataPath.as_posix()
+    return dataPath.as_posix()    
 
 
 def scenegraphState(view, name):

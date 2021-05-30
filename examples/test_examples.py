@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import
 from collections import namedtuple
 from pyqtgraph import Qt
 
 import errno
 import importlib
 import itertools
+from threading import Timer
 import pytest
 import os, sys
 import platform
@@ -172,53 +171,40 @@ except:
     raise
 
 """.format(import1, import2)
-    if sys.platform.startswith('win'):
-        process = subprocess.Popen([sys.executable],
-                                    stdin=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    stdout=subprocess.PIPE)
-    else:
-        process = subprocess.Popen(['exec %s -i' % (sys.executable)],
-                                   shell=True,
-                                   stdin=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
-    process.stdin.write(code.encode('UTF-8'))
-    process.stdin.close()
-    output = ''
-    fail = False
-    while True:
-        try:
-            c = process.stdout.read(1).decode()
-        except IOError as err:
-            if err.errno == errno.EINTR:
-                # Interrupted system call; just try again.
-                c = ''
-            else:
-                raise
-        output += c
 
-        if output.endswith('test complete'):
-            break
-        if output.endswith('test failed'):
-            fail = True
-            break
-    start = time.time()
-    killed = False
-    while process.poll() is None:
-        time.sleep(0.1)
-        if time.time() - start > 2.0 and not killed:
-            process.kill()
-            killed = True
-    #res = process.communicate()
-    res = (process.stdout.read(), process.stderr.read())
+    # if sys.platform.startswith('win'):
+    #     process = subprocess.Popen([sys.executable],
+    #                                 stdin=subprocess.PIPE,
+    #                                 stderr=subprocess.PIPE,
+    #                                 stdout=subprocess.PIPE)
+    # else:
+    #     process = subprocess.Popen(['exec %s -i' % (sys.executable)],
+    #                                shell=True,
+    #                                stdin=subprocess.PIPE,
+    #                                stderr=subprocess.PIPE,
+    #                                stdout=subprocess.PIPE,
+    #                                text=True)
+
+    process = subprocess.Popen(
+        [sys.executable],
+        stdin=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True)
+
+    try:
+        stdout_data, stderr_data = process.communicate(input=code, timeout=2)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        stdout_data, stderr_data = process.communicate()
+    fail = stdout_data.split("\n")[-1] == "test failed"
     if (fail or
-        'exception' in res[1].decode().lower() or
-        'error' in res[1].decode().lower()):
-        print(res[0].decode())
-        print(res[1].decode())
+        'exception' in stderr_data.lower() or
+        'error' in stderr_data.lower()):
+        print(stdout_data)
+        print(stderr_data)
         pytest.fail("{}\n{}\nFailed {} Example Test Located in {} "
-            .format(res[0].decode(), res[1].decode(), name, file),
+            .format(stdout_data, stderr_data, name, file),
             pytrace=False)
 
 if __name__ == "__main__":

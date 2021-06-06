@@ -9,34 +9,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04 , windows-latest, macos-latest]
-        qt-lib: [pyqt, pyside]
-        python-version: [3.7, 3.8, 3.9]
+        # os: [ubuntu-20.04 , windows-latest, macos-latest]
+        os: [macos-latest, ubuntu-latest]
+        # qt-lib: [pyqt, pyside]
+        qt-lib: [pyside]
+        python-version: [3.7]
         include:
-          - python-version: "3.7"
-            qt-lib: "pyqt"
-            qt-version: "PyQt5~=5.12.0"
-            numpy-version: "~=1.17.0"
+          # - python-version: "3.7"
+          #   qt-lib: "pyqt"
+          #   qt-version: "PyQt5~=5.12.0"
+          #   numpy-version: "~=1.17.0"
           - python-version: "3.7"
             qt-lib: "pyside"
             qt-version: "PySide2~=5.12.0"
             numpy-version: "~=1.17.0"
-          - python-version: "3.8"
-            qt-lib: "pyqt"
-            qt-version: "PyQt5~=5.15.0"
-            numpy-version: "~=1.20.0"
-          - python-version: "3.8"
-            qt-lib: "pyside"
-            qt-version: "PySide2~=5.15.0"
-            numpy-version: "~=1.20.0"
-          - python-version: "3.9"
-            qt-lib: "pyqt"
-            qt-version: "PyQt6"
-            numpy-version: "~=1.20.0"
-          - python-version: "3.9"
-            qt-lib: "pyside"
-            qt-version: "PySide6"
-            numpy-version: "~=1.20.0"
+          # - python-version: "3.8"
+          #   qt-lib: "pyqt"
+          #   qt-version: "PyQt5~=5.15.0"
+          #   numpy-version: "~=1.20.0"
+          # - python-version: "3.8"
+          #   qt-lib: "pyside"
+          #   qt-version: "PySide2~=5.15.0"
+          #   numpy-version: "~=1.20.0"
+          # - python-version: "3.9"
+          #   qt-lib: "pyqt"
+          #   qt-version: "PyQt6"
+          #   numpy-version: "~=1.20.0"
+          # - python-version: "3.9"
+          #   qt-lib: "pyside"
+          #   qt-version: "PySide6"
+          #   numpy-version: "~=1.20.0"
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -101,8 +103,8 @@ jobs:
     - name: Run Tests
       run: |
         mkdir $SCREENSHOT_DIR
-        pytest tests examples -v \
-          --junitxml pytest.xml \
+        python -m pytest pytest tests examples -v --junitxml pytest.xml
+        cat playground/functions | xargs -I{} bash -c "pytest tests -k '{} or test_scatterplotitem' >& /dev/null || if [ $? = 139 ]; then echo {}; fi"
       shell: bash
     - name: Upload Screenshots
       uses: actions/upload-artifact@v2

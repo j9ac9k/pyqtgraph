@@ -10,7 +10,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04 , windows-latest, macos-latest]
-        # os: [windows-latest]
         qt-lib: [pyqt, pyside]
         python-version: [3.7, 3.8, 3.9]
         include:
@@ -102,7 +101,7 @@ jobs:
     - name: Run Tests
       run: |
         mkdir $SCREENSHOT_DIR
-        pytest tests -s -v
+        pytest tests -s -v --junitxml pytest.xml
         pytest examples -v
       shell: bash
     - name: Upload Screenshots

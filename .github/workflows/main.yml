@@ -104,11 +104,12 @@ jobs:
         pytest tests -s -v --junitxml pytest.xml
         pytest examples -v
       shell: bash
-    - name: Upload Screenshots
+    - name: Upload pytest.xml
       uses: actions/upload-artifact@v2
+      if: always()
       with:
-        name: Screenshots (Python ${{ matrix.python-version }} - Qt-Bindings ${{ matrix.qt-lib }} - OS ${{ matrix.os }})
-        path: $SCREENSHOT_DIR
+        name: pytest-xml
+        path: ./pytest.xml
         if-no-files-found: ignore
     env:
       SCREENSHOT_DIR: ./screenshots

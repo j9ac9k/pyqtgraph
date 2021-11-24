@@ -1,0 +1,15 @@
+numpy
+numpy==1.18.5
+scipy
+pyopengl
+h5py
+matplotlib
+numba
+pyqt5
+pyqt5==5.12.3
+pyqt6
+pyside2
+pyside2==5.12.6
+pyside6
+pytest
+pytest-xdist

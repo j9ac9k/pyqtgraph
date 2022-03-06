@@ -3,7 +3,7 @@ import pytest
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
-pytest.skip("skipping for CI debugging", allow_module_level=True)
+# pytest.skip("skipping for CI debugging", allow_module_level=True)
 
 app = pg.mkQApp()
 

@@ -41,8 +41,8 @@ jobs:
         shell: cmd
       - name: Install Dependencies
         run: |
-          conda install -c conda-forge pyside2
-          conda install -c defaults numpy scipy pip
+          conda install -q -c conda-forge pyside2
+          conda install -q -c defaults numpy scipy pip
           pip install pytest pytest-xdist
         shell: bash -l {0}
       - name: "Install Linux VirtualDisplay"
@@ -91,7 +91,7 @@ jobs:
       - name: Run Tests
         run: |
           mkdir $SCREENSHOT_DIR
-          pytest tests
+          pytest tests -s
         shell: bash -l {0}
         env:
           SCREENSHOT_DIR: ./screenshots

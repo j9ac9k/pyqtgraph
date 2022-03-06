@@ -5,7 +5,7 @@ import pyqtgraph as pg
 
 app = pg.mkQApp()
 
-pytest.skip("skipping for CI debugging", allow_module_level=True)
+# pytest.skip("skipping for CI debugging", allow_module_level=True)
 
 @pytest.mark.parametrize('orientation', ['left', 'right', 'top', 'bottom'])
 def test_PlotItem_shared_axis_items(orientation):

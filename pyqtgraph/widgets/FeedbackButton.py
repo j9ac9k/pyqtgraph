@@ -143,7 +143,10 @@ class FeedbackButton(QtWidgets.QPushButton):
 
 if __name__ == '__main__':
     import time
-    app = QtWidgets.QApplication([])
+
+    from ..Qt import mkQApp
+
+    app = mkQApp()
     win = QtWidgets.QMainWindow()
     btn = FeedbackButton("Button")
     fail = True

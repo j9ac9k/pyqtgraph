@@ -43,8 +43,8 @@ jobs:
         shell: cmd
       - name: Install Dependencies
         run: |
-          conda install pyside2 numpy scipy pip pytest
-          pip install pytest-xdist
+          conda install pyside2 numpy scipy pip
+          pip install pytest pytest-xdist
         shell: bash -l {0}
       - name: "Install Linux VirtualDisplay"
         if: runner.os == 'Linux'
@@ -92,7 +92,7 @@ jobs:
       - name: Run Tests
         run: |
           mkdir $SCREENSHOT_DIR
-          pytest tests -v
+          pytest tests
         shell: bash -l {0}
         env:
           SCREENSHOT_DIR: ./screenshots

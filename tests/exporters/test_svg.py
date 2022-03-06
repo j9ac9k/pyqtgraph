@@ -24,6 +24,7 @@ def test_plotscene(tmpdir):
     # clean up after the test is done
     w.close()
 
+@pytest.mark.skip()
 def test_simple(tmpdir):    
     view = pg.GraphicsView()
     view.show()

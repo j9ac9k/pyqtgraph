@@ -1,11 +1,12 @@
 from math import isclose
+
 import pytest
 
 import pyqtgraph as pg
 
 app = pg.mkQApp()
 
-
+@pytest.mark.skip()
 def test_AxisItem_stopAxisAtTick(monkeypatch):
     def test_bottom(p, axisSpec, tickSpecs, textSpecs):
         viewPixelSize = view.viewPixelSize()
@@ -94,7 +95,7 @@ def test_AxisItem_leftRelink():
     assert fake_view.sigXRangeChanged.calls == []
     assert fake_view.sigResized.calls == ['connect', 'disconnect']
 
-
+@pytest.mark.skip()
 def test_AxisItem_tickFont(monkeypatch):
     def collides(textSpecs):
         fontMetrics = pg.Qt.QtGui.QFontMetrics(font)

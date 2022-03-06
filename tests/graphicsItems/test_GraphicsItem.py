@@ -1,9 +1,14 @@
-import faulthandler
+# import faulthandler
 import weakref
+
+import pytest
 
 import pyqtgraph as pg
 
-faulthandler.enable()
+# faulthandler.enable()
+pytest.skip("skipping for CI debugging", allow_module_level=True)
+
+
 
 pg.mkQApp()
 

@@ -155,7 +155,7 @@ jobs:
         shell: cmd
       - name: Install Dependencies
         run: |
-          conda install pyside2 numpy scipy pyopengl numba pip pytest
+          conda install -q pyside2 numpy scipy pyopengl numba pip pytest
           pip install pytest-xdist
         shell: bash -l {0}
       - name: "Install Linux VirtualDisplay"
@@ -204,7 +204,6 @@ jobs:
       - name: Run Tests
         run: |
           mkdir $SCREENSHOT_DIR
-          pytest pyqtgraph/examples -v
           pytest tests -v
         shell: bash -l {0}
         env:

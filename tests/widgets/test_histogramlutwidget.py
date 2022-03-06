@@ -5,11 +5,12 @@ Tests the creation of a HistogramLUTWidget.
 """
 
 import numpy as np
+import pytest
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
 
-
+pytest.mark.skip(reason="problem on macOS-conda-ci")
 def testHistogramLUTWidget():
     pg.mkQApp()
     

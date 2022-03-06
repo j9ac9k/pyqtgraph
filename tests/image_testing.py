@@ -66,7 +66,7 @@ def getTester():
 def getImageFromWidget(widget):
 
     # just to be sure the widget size is correct (new window may be resized):
-    QtWidgets.QApplication.processEvents()
+    QtWidgets.QApplication.processEvents(flags=QtCore.QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
 
     qimg = QtGui.QImage(widget.size(), QtGui.QImage.Format.Format_ARGB32)
     qimg.fill(QtCore.Qt.GlobalColor.transparent)
@@ -103,6 +103,7 @@ def assertImageApproved(image, standardFile, message=None, **kwargs):
     Extra keyword arguments are used to set the thresholds for automatic image
     comparison (see ``assertImageMatch()``).
     """
+    
     if isinstance(image, QtWidgets.QWidget):
         # just to be sure the widget size is correct (new window may be resized):
         QtWidgets.QApplication.processEvents()

@@ -11,8 +11,3 @@ def tmp_module(tmp_path):
     sys.path.insert(0, module_path)
     yield module_path
     sys.path.remove(module_path)
-
-@pytest.fixture(autouse=True)
-def slow_down_tests():
-    yield
-    time.sleep(1)

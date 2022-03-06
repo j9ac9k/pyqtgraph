@@ -21,8 +21,6 @@ jobs:
         with:
           miniconda-version: "latest"
           auto-update-conda: true
-          channels: conda-forge,defaults
-          channel-priority: true
           python-version: "3.8"
       - name: "Install Windows-Mesa OpenGL DLL"
         if: runner.os == 'Windows'
@@ -43,7 +41,8 @@ jobs:
         shell: cmd
       - name: Install Dependencies
         run: |
-          conda install pyside2 numpy scipy pip
+          conda install -c conda-forge pyside2
+          conda install -c defaults numpy scipy pip
           pip install pytest pytest-xdist
         shell: bash -l {0}
       - name: "Install Linux VirtualDisplay"

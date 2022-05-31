@@ -7,5 +7,6 @@ dependencies:
   - numpy
   - nomkl
   - scipy
+  - docstring_parser
   - pyopengl
   - pip

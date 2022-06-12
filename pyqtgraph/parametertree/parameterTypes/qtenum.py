@@ -51,7 +51,10 @@ class QtEnumParameter(ListParameter):
     def _getAllowedEnums(self, enum):
         """Pyside provides a dict for easy evaluation"""
         if 'PySide' in QT_LIB:
-            vals = enum.values
+            try:
+                vals = enum.values
+            except AttributeError:  # pyside6 6.4+
+                vals = {e.name: e for e in enum}
         elif 'PyQt5' in QT_LIB:
             vals = {}
             for key in dir(self.searchObj):

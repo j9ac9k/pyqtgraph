@@ -1,0 +1,7 @@
+blank_issues_enabled: true
+contact_links:
+  - name: PyQtGraph
+    url: https://pyqtgraph.org
+    about: Project Website
+  - name: Contributing Guide
+    url: https://github.com/pyqtgraph/pyqtgraph/blob/master/CONTRIBUTING.md

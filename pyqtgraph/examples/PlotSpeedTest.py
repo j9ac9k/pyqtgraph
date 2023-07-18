@@ -5,6 +5,7 @@ Update a simple plot as rapidly as possible to measure speed.
 
 import argparse
 import itertools
+from time import perf_counter
 
 import numpy as np
 from utils import FrameCounter
@@ -32,6 +33,9 @@ parser.add_argument('--allow-opengl-toggle', action='store_true',
     """)
 parser.add_argument('--iterations', default=float('inf'), type=float,
     help="Number of iterations to run before exiting"
+)
+parser.add_argument('--duration', default=float('inf'), type=float,
+    help="Duration to run the test before exiting (in seconds)."
 )
 args = parser.parse_args()
 
@@ -129,6 +133,10 @@ def update(
         timer.stop()
         app.quit()
         return None
+    elif perf_counter() - start > args.duration:
+        timer.stop()
+        app.quit()
+        return None
 
     if connect == 'array':
         connect = connect_array
@@ -163,7 +171,7 @@ def updateOptions(
 
 
 makeData()
-
+start = perf_counter()
 timer = QtCore.QTimer()
 timer.timeout.connect(update)
 timer.start(0)

@@ -8,6 +8,7 @@ is used by the view widget
 import argparse
 import itertools
 import sys
+from time import perf_counter
 
 import numpy as np
 from utils import FrameCounter
@@ -40,8 +41,19 @@ except ImportError:
     RawImageGLWidget = None
 
 parser = argparse.ArgumentParser(description="Benchmark for testing video performance")
-parser.add_argument('--cuda', default=False, action='store_true', help="Use CUDA to process on the GPU", dest="cuda")
-parser.add_argument('--dtype', default='uint8', choices=['uint8', 'uint16', 'float'], help="Image dtype (uint8, uint16, or float)")
+parser.add_argument(
+    '--cuda',
+    default=False,
+    action='store_true',
+    help="Use CUDA to process on the GPU",
+    dest="cuda"
+)
+parser.add_argument(
+    '--dtype',
+    default='uint8',
+    choices=['uint8', 'uint16', 'float'],
+    help="Image dtype (uint8, uint16, or float)"
+)
 parser.add_argument('--frames', default=3, type=int, help="Number of image frames to generate (default=3)")
 parser.add_argument('--image-mode', default='mono', choices=['mono', 'rgb'], help="Image data mode (mono or rgb)", dest='image_mode')
 parser.add_argument('--levels', default=None, type=lambda s: tuple([float(x) for x in s.split(',')]), help="min,max levels to scale monochromatic image dynamic range, or rmin,rmax,gmin,gmax,bmin,bmax to scale rgb")
@@ -49,7 +61,10 @@ parser.add_argument('--lut', default=False, action='store_true', help="Use color
 parser.add_argument('--lut-alpha', default=False, action='store_true', help="Use alpha color lookup table", dest='lut_alpha')
 parser.add_argument('--size', default='512x512', type=lambda s: tuple([int(x) for x in s.split('x')]), help="WxH image dimensions default='512x512'")
 parser.add_argument('--iterations', default=float('inf'), type=float,
-    help="Number of iterations to run before exiting"
+    help="Number of iterations to run before exiting (in seconds)"
+)
+parser.add_argument('--duration', default=float('inf'), type=float,
+    help="Duration to run the test before exiting"
 )
 args = parser.parse_args(sys.argv[1:])
 iterations_counter = itertools.count()
@@ -232,6 +247,8 @@ def noticeNumbaCheck():
 
 mkData()
 
+start = perf_counter()
+ms_readings = []
 
 ui.dtypeCombo.currentIndexChanged.connect(mkData)
 ui.rgbCheck.toggled.connect(mkData)
@@ -253,7 +270,11 @@ def update():
         timer.stop()
         app.quit()
         return None
-
+    elif perf_counter() - start > args.duration:
+        timer.stop()
+        app.quit()
+        print(np.mean(ms_readings))
+        return None
     if ui.lutCheck.isChecked():
         useLut = LUT
     else:
@@ -292,6 +313,7 @@ timer.start(0)
 
 framecnt = FrameCounter()
 framecnt.sigFpsUpdate.connect(lambda fps: ui.fpsLabel.setText(f'{fps:.1f} fps'))
+framecnt.sigFpsUpdate.connect(lambda fps: ms_readings.append(1_000 / fps))
 
 if __name__ == '__main__':
     pg.exec()

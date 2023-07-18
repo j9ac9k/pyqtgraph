@@ -4,6 +4,7 @@ Test the speed of rapidly updating multiple plot curves
 """
 import argparse
 import itertools
+from time import perf_counter
 
 import numpy as np
 from utils import FrameCounter
@@ -14,6 +15,10 @@ from pyqtgraph.Qt import QtCore
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', default=float('inf'), type=float,
     help="Number of iterations to run before exiting"
+)
+parser.add_argument(
+    '--duration', default=float('inf'), type=float,
+    help="Duration to run the test before exiting (in seconds)"
 )
 args = parser.parse_args()
 iterations_counter = itertools.count()
@@ -44,9 +49,14 @@ plot.addItem(rgn)
 
 data = np.random.normal(size=(nPlots*23,nSamples))
 ptr = 0
+start = perf_counter()
 def update():
     global ptr
     if next(iterations_counter) > args.iterations:
+        timer.stop()
+        app.quit()
+        return None
+    elif perf_counter() - start > args.duration:
         timer.stop()
         app.quit()
         return None

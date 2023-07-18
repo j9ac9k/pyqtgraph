@@ -8,6 +8,7 @@ For testing rapid updates of ScatterPlotItem under various conditions.
 import argparse
 import itertools
 import re
+from time import perf_counter
 
 import numpy as np
 from utils import FrameCounter
@@ -21,6 +22,9 @@ translate = QtCore.QCoreApplication.translate
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', default=float('inf'), type=float,
     help="Number of iterations to run before exiting"
+)
+parser.add_argument('--duration', default=float('inf'), type=float,
+    help="Duration to run the test before exiting (in seconds)"
 )
 args = parser.parse_args()
 iterations_counter = itertools.count()
@@ -112,6 +116,10 @@ def update(mode="Reuse Item"):
         timer.stop()
         app.quit()
         return None
+    elif perf_counter() - start > args.duration:
+        timer.stop()
+        app.quit()
+        return None
     if mode == "New Item":
         mkItem()
     elif mode == "Reuse Item":
@@ -138,6 +146,7 @@ def pausePlot(paused=False):
         timer.start()
 
 mkDataAndItem()
+start = perf_counter()
 timer.timeout.connect(update)
 timer.start(0)
 

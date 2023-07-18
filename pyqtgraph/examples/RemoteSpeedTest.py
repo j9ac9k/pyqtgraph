@@ -12,6 +12,7 @@ remote case is much faster.
 
 import argparse
 import itertools
+from time import perf_counter
 
 import numpy as np
 from utils import FrameCounter
@@ -22,6 +23,9 @@ from pyqtgraph.Qt import QtCore, QtWidgets
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', default=float('inf'), type=float,
     help="Number of iterations to run before exiting"
+)
+parser.add_argument('--duration', default=float('inf'), type=float,
+    help="Duration to run the test before exiting (in seconds)."
 )
 args = parser.parse_args()
 iterations_counter = itertools.count()
@@ -59,6 +63,10 @@ def update():
         timer.stop()
         app.quit()
         return None
+    elif perf_counter() - start > args.duration:
+        timer.stop()
+        app.quit()
+        return None
 
     data = np.random.normal(size=(10000,50)).sum(axis=1)
     data += 5 * np.sin(np.linspace(0, 10, data.shape[0]))
@@ -73,7 +81,8 @@ def update():
         lplt.plot(data, clear=True)
 
     framecnt.update()
-        
+
+start = perf_counter()
 timer = QtCore.QTimer()
 timer.timeout.connect(update)
 timer.start(0)

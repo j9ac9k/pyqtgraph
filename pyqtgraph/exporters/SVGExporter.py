@@ -11,6 +11,9 @@ from .. import functions as fn
 from ..parametertree import Parameter
 from ..Qt import QtCore, QtGui, QtSvg, QtWidgets
 from .Exporter import Exporter
+from ..graphicsItems.GraphicsItem import GraphicsItem
+from ..graphicsItems.PlotCurveItem import PlotCurveItem
+from ..graphicsItems.ViewBox.ViewBox import ChildGroup
 
 translate = QtCore.QCoreApplication.translate
 
@@ -218,13 +221,29 @@ def _generateItemSvg(item, nodes=None, root=None, options=None):
     else:
         childs = item.childItems()
 
+        normalizeTransform = QtGui.QTransform()
+        # if isinstance(item, PlotCurveItem):
+        # shift to unit square
+        worked = QtGui.QTransform().quadToSquare(
+            item.transform().mapToPolygon(item.boundingRect().toRect()).toPolygonF(),
+            normalizeTransform
+        )
+
+        if isinstance(item, GraphicsItem):
+            original = item.transform()
+            # print(f"{type(item)=} {strTransform(original)}")
+            if isinstance(item, ChildGroup):
+                item.setTransform(QtGui.QTransform())
+            else:
+                item.setTransform(normalizeTransform, combine=False)
+        
         tr = itemTransform(item, item.scene())
+        
         # offset to corner of root item
         if isinstance(root, QtWidgets.QGraphicsScene):
             rootPos = QtCore.QPoint(0,0)
         else:
             rootPos = root.scenePos()
-
         # handle rescaling from the export dialog
         if hasattr(root, 'boundingRect'):
             resize_x = options["width"] / root.boundingRect().width()
@@ -232,8 +251,9 @@ def _generateItemSvg(item, nodes=None, root=None, options=None):
         else:
             resize_x = resize_y = 1
         tr2 = QtGui.QTransform(resize_x, 0, 0, resize_y, -rootPos.x(), -rootPos.y())
-        tr = tr * tr2
-        # tr = manipulate * tr * tr2
+
+        tr =  tr * tr2
+
 
         arr = QtCore.QByteArray()
         buf = QtCore.QBuffer(arr)
@@ -241,12 +261,25 @@ def _generateItemSvg(item, nodes=None, root=None, options=None):
         svg.setOutputDevice(buf)
         dpi = QtGui.QGuiApplication.primaryScreen().logicalDotsPerInchX()
         svg.setResolution(int(dpi))
+
+
         p = QtGui.QPainter()
         p.begin(svg)
         if hasattr(item, 'setExportMode'):
             item.setExportMode(True, {'painter': p})
         try:
-            p.setTransform(tr)
+
+            # if isinstance(item, PlotCurveItem):
+            #     p.setTransform(QtGui.QTransform(1, 0, 0, 1, 0, 0))
+            # else:
+            if isinstance(item, ChildGroup):
+                item.setTransform(original)
+                tr = itemTransform(item, item.scene())
+                p.setTransform(fn.invertQTransform(original) * tr * tr2)
+            else:
+                p.setTransform(fn.invertQTransform(normalizeTransform) * tr)
+                # p.setTransform(tr)
+
             opt = QtWidgets.QStyleOptionGraphicsItem()
             if item.flags() & QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemUsesExtendedStyleOption:
                 opt.exposedRect = item.boundingRect()
@@ -258,6 +291,9 @@ def _generateItemSvg(item, nodes=None, root=None, options=None):
             # if hasattr(item, 'setExportMode'):
             #     item.setExportMode(False)
         doc = xml.parseString(arr.data())
+
+        if isinstance(item, GraphicsItem):
+            item.setTransform(original)
 
     try:
         ## Get top-level group for this item
@@ -503,6 +539,10 @@ def itemTransform(item, root):
             tr = itemTransform(nextRoot, root) * item.itemTransform(nextRoot)[0]
     
     return tr
+
+
+def strTransform(tr):
+    return f"sx={tr.m11()} sy={tr.m22()} dx={tr.m31()} dy={tr.m32()}"
 
             
 def cleanXml(node):
